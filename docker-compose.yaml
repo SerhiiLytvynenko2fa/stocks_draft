@@ -36,11 +36,12 @@ services:
       "
 
   airflow-scheduler:
-    image: apache/airflow:2.9.1-python3.10
+    image: airflow-with-sudo
     depends_on:
       - airflow-webserver
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__WEBSERVER__SECRET_KEY: testsecretkey
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     volumes:
       - ./dags:/opt/airflow/dags

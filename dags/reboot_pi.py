@@ -1,25 +1,34 @@
-from airflow import DAG
+from airflow.decorators import dag, task
 from airflow.operators.bash import BashOperator
+from airflow.models import Variable
 from datetime import datetime
 
 default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2024, 1, 1),
-    'retries': 0,
+    'start_date': datetime(2025, 6, 30),
 }
 
-with DAG(
-    dag_id='reboot_pi',
+@dag(
     default_args=default_args,
-    description='Reboot Raspberry Pi from Airflow',
-    schedule_interval=None,  # Або cron: '0 3 * * *' для щоденного о 3:00
+    description='Create file and reboot Raspberry Pi',
+    schedule_interval=None,
     catchup=False,
-    tags=['raspberry', 'system'],
-) as dag:
+    tags=['raspberry', 'system']
+)
+def reboot_pi():
+    @task
+    def write_key():
+        key = Variable.get("ssh_private_key")
+        with open("/tmp/id_rsa", "w") as f:
+            f.write(key)
+        import os
+        os.chmod("/tmp/id_rsa", 0o600)
 
-    reboot = BashOperator(
-        task_id='reboot_pi_task',
-        bash_command='sudo /sbin/reboot'
+    reboot_pi = BashOperator(
+        task_id="reboot_pi",
+        bash_command="""
+            ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no serhiilytvynenko@192.168.0.112 'sudo /sbin/reboot'
+        """,
     )
 
-    reboot
+    write_key() >> reboot_pi
+reboot_pi()
