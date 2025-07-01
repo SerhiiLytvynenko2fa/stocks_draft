@@ -45,7 +45,9 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     volumes:
       - ./dags:/opt/airflow/dags
-    command: airflow scheduler
+      - /home/serhiilytvynenko/.ssh/id_rsa:/opt/airflow/.ssh/id_rsa:rw
+    user: root
+    command: bash -c "chown airflow:root /opt/airflow/.ssh/id_rsa && chmod 600 /opt/airflow/.ssh/id_rsa && exec airflow scheduler"
 
 volumes:
   postgres_data:
